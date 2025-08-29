@@ -1,77 +1,61 @@
 const express = require("express");
-const app = express();
+const bodyParser = require("body-parser");
 
-app.use(express.json());
+const app = express();
+app.use(bodyParser.json());
+
+app.get("/bfhl", (req, res) => {
+  res.json({ operation_code: 1 });
+});
 
 app.post("/bfhl", (req, res) => {
   try {
-    const { full_name, dob, emailId, collegeRollNumber, data } = req.body;
+    const data = req.body.data || [];
 
-    if (!full_name || !dob || !emailId || !collegeRollNumber || !data) {
-      return res.status(400).json({
-        is_success: false,
-        message: "Expected body: { full_name, dob, emailId, collegeRollNumber, data: [] }",
-      });
-    }
+    const user_id = "john_doe_17091999";
+    const email = "john@xyz.com";
+    const roll_number = "ABCD123";
 
-   
-    const user_id = `${full_name.toLowerCase().replace(/\s+/g, "_")}_${dob}`;
-
-
-    let odd_numbers = [];
-    let even_numbers = [];
-    let alphabets = [];
-    let special_characters = [];
+    const even_numbers = [];
+    const odd_numbers = [];
+    const alphabets = [];
+    const special_characters = [];
     let sum = 0;
 
-    data.forEach((item) => {
-      if (/^\d+$/.test(item)) {
-
-        const num = parseInt(item, 10);
+    data.forEach(item => {
+      if (!isNaN(item)) { 
+        const num = parseInt(item);
         sum += num;
-        if (num % 2 === 0) {
-          even_numbers.push(item);
-        } else {
-          odd_numbers.push(item);
-        }
-      } else if (/^[a-zA-Z]$/.test(item)) {
- 
-        alphabets.push(item.toUpperCase());
-      } else {
-
-        special_characters.push(item);
-      }
+        if (num % 2 === 0) even_numbers.push(item);
+        else odd_numbers.push(item);
+      } else if (/^[a-zA-Z]+$/.test(item)) {   
+  alphabets.push(item.toUpperCase());
+} else {
+  special_characters.push(item);
+}
     });
-
 
     let concat_string = "";
-    alphabets.forEach((ch, idx) => {
+    alphabets.reverse().forEach((ch, idx) => {
       concat_string += idx % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase();
     });
-    concat_string = concat_string.split("").reverse().join("");
 
-    return res.json({
+    res.json({
       is_success: true,
       user_id,
-      email: emailId,
-      roll_number: collegeRollNumber,
+      email,
+      roll_number,
       odd_numbers,
       even_numbers,
       alphabets,
       special_characters,
       sum: sum.toString(),
-      concat_string,
+      concat_string
     });
+
   } catch (err) {
-    return res.status(500).json({ is_success: false, message: err.message });
+    res.status(500).json({ is_success: false, error: err.message });
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Backend is running 🚀. Use POST /bfhl to test.");
-});
-
-
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
-});
+module.exports = app;
