@@ -67,6 +67,11 @@ app.post("/bfhl", (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀. Use POST /bfhl to test.");
+});
+
+
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });
