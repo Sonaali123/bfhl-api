@@ -1,89 +1,72 @@
 const express = require("express");
-const cors = require("cors");
-
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-const isLetter = (ch) => /^[A-Za-z]$/.test(ch);
-const isAlnum = (ch) => /^[A-Za-z0-9]$/.test(ch);
+app.use(express.json());
 
 app.post("/bfhl", (req, res) => {
   try {
-    const { full_name, dob, emailId, collegeRollNumber, data } = req.body || {};
+    const { full_name, dob, emailId, collegeRollNumber, data } = req.body;
 
-    if (
-      typeof full_name !== "string" ||
-      typeof dob !== "string" ||
-      typeof emailId !== "string" ||
-      typeof collegeRollNumber !== "string" ||
-      !Array.isArray(data)
-    ) {
+    if (!full_name || !dob || !emailId || !collegeRollNumber || !data) {
       return res.status(400).json({
         is_success: false,
-        message:
-          "Expected body: { full_name, dob (ddmmyyyy), emailId, collegeRollNumber, data: [] }",
+        message: "Expected body: { full_name, dob, emailId, collegeRollNumber, data: [] }",
       });
     }
 
-    const user_id =
-      full_name.trim().toLowerCase().replace(/\s+/g, "_") + "_" + dob;
+   
+    const user_id = `${full_name.toLowerCase().replace(/\s+/g, "_")}_${dob}`;
 
-    const evenNumbers = [];
-    const oddNumbers = [];
-    const alphabetsUppercase = [];
-    const specialCharacters = [];
-    const lettersSequence = [];
-    let sumOfNumbers = 0;
 
-    for (const item of data) {
-      if (typeof item === "number" && Number.isFinite(item)) {
-        sumOfNumbers += item;
-        if (Number.isInteger(item)) {
-          (Math.abs(item) % 2 === 0 ? evenNumbers : oddNumbers).push(item);
+    let odd_numbers = [];
+    let even_numbers = [];
+    let alphabets = [];
+    let special_characters = [];
+    let sum = 0;
+
+    data.forEach((item) => {
+      if (/^\d+$/.test(item)) {
+
+        const num = parseInt(item, 10);
+        sum += num;
+        if (num % 2 === 0) {
+          even_numbers.push(item);
+        } else {
+          odd_numbers.push(item);
         }
-        continue;
-      }
+      } else if (/^[a-zA-Z]$/.test(item)) {
+ 
+        alphabets.push(item.toUpperCase());
+      } else {
 
-      if (typeof item === "string") {
-        for (const ch of item) {
-          if (isLetter(ch)) {
-            alphabetsUppercase.push(ch.toUpperCase());
-            lettersSequence.push(ch);
-          } else if (!isAlnum(ch)) {
-            specialCharacters.push(ch);
-          }
-        }
+        special_characters.push(item);
       }
-    }
-
-    const reversed = lettersSequence.reverse();
-    let reverseAlternatingCaps = "";
-    reversed.forEach((ch, idx) => {
-      const lower = ch.toLowerCase();
-      reverseAlternatingCaps += idx % 2 === 0 ? lower.toUpperCase() : lower;
     });
 
-    return res.status(200).json({
+
+    let concat_string = "";
+    alphabets.forEach((ch, idx) => {
+      concat_string += idx % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase();
+    });
+    concat_string = concat_string.split("").reverse().join("");
+
+    return res.json({
       is_success: true,
       user_id,
-      emailId,
-      collegeRollNumber,
-      evenNumbers,
-      oddNumbers,
-      alphabetsUppercase,
-      specialCharacters,
-      sumOfNumbers,
-      reverseAlternatingCaps,
+      email: emailId,
+      roll_number: collegeRollNumber,
+      odd_numbers,
+      even_numbers,
+      alphabets,
+      special_characters,
+      sum: sum.toString(),
+      concat_string,
     });
   } catch (err) {
-    console.error("Error:", err.message);
-    return res.status(500).json({
-      is_success: false,
-      message: "Internal Server Error",
-    });
+    return res.status(500).json({ is_success: false, message: err.message });
   }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server is running on port ${port}`));
+app.listen(3000, () => {
+  console.log("Server running on http://localhost:3000");
+});
